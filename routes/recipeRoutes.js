@@ -7,14 +7,22 @@ router.get('/recipes', async (req, res) => {
   try {
     const recipes = await Recipe.find()
       .populate('ingredients.ingredient')
-      .populate('ingredients.unit'); // Populate unit details
+      .populate('ingredients.unit'); // Populate both ingredient and unit details
 
+    // Map the results to include the ingredient ID and unit name
     const formattedRecipes = recipes.map((recipe) => ({
       ...recipe.toObject(),
       ingredients: recipe.ingredients.map((ingredientRef) => ({
         amount: ingredientRef.amount,
-        unit: ingredientRef.unit, // Access the unit name
-        ingredient: ingredientRef.ingredient,
+        id: ingredientRef.ingredient._id, // Add the ingredient ID here
+        unit: {
+          id: ingredientRef.unit._id, // Include the unit ID
+          name: ingredientRef.unit.name, // Include the unit name
+        },
+        ingredient: {
+          id: ingredientRef.ingredient._id, // Include the ingredient ID
+          name: ingredientRef.ingredient.name, // Include the ingredient name
+        },
       })),
     }));
 
