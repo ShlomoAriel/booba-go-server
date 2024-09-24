@@ -3,24 +3,26 @@ const StepSchema = require('./Step'); // Import Step schema for embedding
 const Ingredient = require('./Ingredient'); // Import Ingredient model for referencing
 
 const RecipeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
+  name: String,
   ingredients: [
     {
       ingredient: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ingredient', // Referencing Ingredient model by ObjectId
-        required: true,
+        ref: 'Ingredient',
       },
-      amount: {
-        type: Number,
-        required: true,
+      amount: Number,
+      unit: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Unit', // Ensure this field is always populated
       },
     },
   ],
-  steps: [StepSchema], // Embedding steps as subdocuments
+  steps: [
+    {
+      description: String,
+      order: Number,
+    },
+  ],
 });
 
 module.exports = mongoose.model('Recipe', RecipeSchema);
