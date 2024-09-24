@@ -1,28 +1,16 @@
 const mongoose = require('mongoose');
-const StepSchema = require('./Step'); // Import Step schema for embedding
-const Ingredient = require('./Ingredient'); // Import Ingredient model for referencing
 
-const RecipeSchema = new mongoose.Schema({
-  name: String,
-  ingredients: [
-    {
-      ingredient: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ingredient',
-      },
-      amount: Number,
-      unit: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Unit', // Ensure this field is always populated
-      },
-    },
-  ],
-  steps: [
-    {
-      description: String,
-      order: Number,
-    },
-  ],
+const ingredientReferenceSchema = new mongoose.Schema({
+  ingredient: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
+  amount: { type: Number, required: true },
+  unit: { type: mongoose.Schema.Types.ObjectId, ref: 'Unit', required: true }, // Change to ObjectId
 });
 
-module.exports = mongoose.model('Recipe', RecipeSchema);
+const recipeSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  ingredients: [ingredientReferenceSchema],
+  steps: [{ description: String, order: Number }],
+});
+
+const Recipe = mongoose.model('Recipe', recipeSchema);
+module.exports = Recipe;

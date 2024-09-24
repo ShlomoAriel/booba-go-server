@@ -5,8 +5,20 @@ const Recipe = require('../models/Recipe');
 // Get all recipes
 router.get('/recipes', async (req, res) => {
   try {
-    const recipes = await Recipe.find().populate('ingredients.ingredient'); // Populate ingredient details
-    res.json(recipes);
+    const recipes = await Recipe.find()
+      .populate('ingredients.ingredient')
+      .populate('ingredients.unit'); // Populate unit details
+
+    const formattedRecipes = recipes.map((recipe) => ({
+      ...recipe.toObject(),
+      ingredients: recipe.ingredients.map((ingredientRef) => ({
+        amount: ingredientRef.amount,
+        unit: ingredientRef.unit, // Access the unit name
+        ingredient: ingredientRef.ingredient,
+      })),
+    }));
+
+    res.json(formattedRecipes);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

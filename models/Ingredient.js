@@ -1,14 +1,8 @@
 const mongoose = require('mongoose');
 
-const IngredientSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  unit: {
-    type: String,
-    required: true, // e.g., "grams", "cups"
-  },
+const ingredientSchema = new mongoose.Schema({
+  name: { type: String, required: true },
 });
 
-module.exports = mongoose.model('Ingredient', IngredientSchema);
+const Ingredient = mongoose.model('Ingredient', ingredientSchema);
+module.exports = Ingredient;
