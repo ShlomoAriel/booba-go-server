@@ -5,6 +5,10 @@ const IngredientSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  unit: {
+    type: String,
+    required: true, // e.g., "grams", "cups"
+  },
 });
 
 module.exports = mongoose.model('Ingredient', IngredientSchema);

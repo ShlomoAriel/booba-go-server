@@ -2,25 +2,65 @@ const express = require('express');
 const router = express.Router();
 const Recipe = require('../models/Recipe');
 
+// Get all recipes
+router.get('/recipes', async (req, res) => {
+  try {
+    const recipes = await Recipe.find().populate('ingredients.ingredient'); // Populate ingredient details
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a single recipe by ID
+router.get('/recipes/:id', async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id).populate(
+      'ingredients.ingredient'
+    ); // Populate ingredient details
+    if (!recipe) throw new Error('Recipe not found');
+    res.json(recipe);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
 // Create a new recipe
 router.post('/recipes', async (req, res) => {
-  const { name, ingredient, amount, unit } = req.body;
+  const { name, ingredients, steps } = req.body;
   try {
-    const recipe = new Recipe({ name, ingredient, amount, unit });
-    await recipe.save();
-    res.status(201).json(recipe);
+    const newRecipe = new Recipe({ name, ingredients, steps });
+    await newRecipe.save();
+    res.status(201).json(newRecipe);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get all recipes
-router.get('/recipes', async (req, res) => {
+// Update an existing recipe
+router.put('/recipes/:id', async (req, res) => {
+  const { name, ingredients, steps } = req.body;
   try {
-    const recipes = await Recipe.find().populate('ingredient').populate('unit');
-    res.json(recipes);
+    const updatedRecipe = await Recipe.findByIdAndUpdate(
+      req.params.id,
+      { name, ingredients, steps },
+      { new: true }
+    ).populate('ingredients.ingredient'); // Populate ingredient details after updating
+    if (!updatedRecipe) throw new Error('Recipe not found');
+    res.json(updatedRecipe);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete a recipe
+router.delete('/recipes/:id', async (req, res) => {
+  try {
+    const recipe = await Recipe.findByIdAndDelete(req.params.id);
+    if (!recipe) throw new Error('Recipe not found');
+    res.json({ message: 'Recipe deleted successfully' });
+  } catch (error) {
+    res.status(404).json({ error: error.message });
   }
 });
 
