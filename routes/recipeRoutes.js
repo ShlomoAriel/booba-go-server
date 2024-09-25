@@ -9,22 +9,27 @@ router.get('/recipes', async (req, res) => {
       .populate('ingredients.ingredient')
       .populate('ingredients.unit'); // Populate both ingredient and unit details
 
-    // Map the results to include the ingredient ID, unit name, and imageURL
+    // Map the results to include the ingredient ID, unit name, imageURL, and links
     const formattedRecipes = recipes.map((recipe) => ({
       ...recipe.toObject(),
       ingredients: recipe.ingredients.map((ingredientRef) => ({
         amount: ingredientRef.amount,
-        id: ingredientRef.ingredient._id, // Add the ingredient ID here
+        id: ingredientRef.ingredient._id,
         unit: {
-          id: ingredientRef.unit._id, // Include the unit ID
-          name: ingredientRef.unit.name, // Include the unit name
+          id: ingredientRef.unit._id,
+          name: ingredientRef.unit.name,
         },
         ingredient: {
-          id: ingredientRef.ingredient._id, // Include the ingredient ID
-          name: ingredientRef.ingredient.name, // Include the ingredient name
+          id: ingredientRef.ingredient._id,
+          name: ingredientRef.ingredient.name,
         },
       })),
-      imageURL: recipe.imageURL, // Include imageURL here
+      imageURL: recipe.imageURL, // Include imageURL
+      links: recipe.links.map((link) => ({
+        url: link.url,
+        type: link.type,
+        description: link.description,
+      })), // Include links
     }));
 
     res.json(formattedRecipes);
@@ -41,11 +46,11 @@ router.get('/recipes/:id', async (req, res) => {
       .populate('ingredients.unit'); // Populate ingredient and unit details
     if (!recipe) throw new Error('Recipe not found');
 
-    // Format the response to include imageURL
+    // Format the response to include imageURL and links
     res.json({
       id: recipe._id,
       name: recipe.name,
-      imageURL: recipe.imageURL, // Include imageURL here
+      imageURL: recipe.imageURL, // Include imageURL
       ingredients: recipe.ingredients.map((ingredientRef) => ({
         amount: ingredientRef.amount,
         id: ingredientRef.ingredient._id,
@@ -59,17 +64,47 @@ router.get('/recipes/:id', async (req, res) => {
         },
       })),
       steps: recipe.steps,
+      links: recipe.links.map((link) => ({
+        url: link.url,
+        type: link.type,
+        description: link.description,
+      })), // Include links
     });
   } catch (error) {
     res.status(404).json({ error: error.message });
   }
 });
 
+// Helper function to detect link type based on the URL
+function getLinkType(url) {
+  if (url.includes('instagram.com')) return 'instagram';
+  if (url.includes('facebook.com')) return 'facebook';
+  if (url.includes('google.com/maps')) return 'google_map';
+  if (url.includes('alltrails.com')) return 'alltrail';
+  return 'other';
+}
+
 // Create a new recipe
 router.post('/recipes', async (req, res) => {
-  const { name, ingredients, steps, imageURL } = req.body; // Include imageURL in destructuring
+  const { name, ingredients, steps, imageURL, links } = req.body; // Include links in the destructuring
+
   try {
-    const newRecipe = new Recipe({ name, ingredients, steps, imageURL }); // Add imageURL to the recipe
+    // Process the links array, detecting their type based on URL
+    const processedLinks = links.map((link) => ({
+      url: link.url,
+      type: getLinkType(link.url), // Detect the link type
+      description: link.description || '', // Optional description
+    }));
+
+    // Create a new recipe with the processed links
+    const newRecipe = new Recipe({
+      name,
+      ingredients,
+      steps,
+      imageURL, // Add imageURL to the recipe
+      links: processedLinks, // Add processed links to the recipe
+    });
+
     await newRecipe.save();
     res.status(201).json(newRecipe);
   } catch (error) {
