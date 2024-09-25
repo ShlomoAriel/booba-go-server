@@ -26,6 +26,7 @@ router.get('/recipes', async (req, res) => {
       })),
       imageURL: recipe.imageURL, // Include imageURL
       links: recipe.links.map((link) => ({
+        id: link._id,
         url: link.url,
         type: link.type,
         description: link.description,
@@ -65,6 +66,7 @@ router.get('/recipes/:id', async (req, res) => {
       })),
       steps: recipe.steps,
       links: recipe.links.map((link) => ({
+        id: link._id,
         url: link.url,
         type: link.type,
         description: link.description,
