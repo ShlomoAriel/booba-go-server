@@ -77,6 +77,35 @@ router.get('/recipes/:id', async (req, res) => {
   }
 });
 
+// Add a new link to an existing recipe
+router.post('/recipes/:id/addLink', async (req, res) => {
+  const { url, description } = req.body; // Extract the URL and description from the request body
+
+  try {
+    const recipe = await Recipe.findById(req.params.id); // Find the recipe by its ID
+    if (!recipe) {
+      return res.status(404).json({ error: 'Recipe not found' });
+    }
+
+    // Create a new link object based on the URL
+    const newLink = {
+      url,
+      type: getLinkType(url), // Detect the type of the link
+      description: description || '', // Optional description, defaults to an empty string if not provided
+    };
+
+    // Add the new link to the recipe's links array
+    recipe.links.push(newLink);
+
+    // Save the updated recipe
+    await recipe.save();
+
+    res.status(200).json(recipe); // Return the updated recipe with the new link
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Helper function to detect link type based on the URL
 function getLinkType(url) {
   if (url.includes('instagram.com')) return 'instagram';
