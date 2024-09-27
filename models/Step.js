@@ -15,4 +15,5 @@ const StepSchema = new mongoose.Schema({
   },
 });
 
+// Export only the schema to embed it in other models
 module.exports = StepSchema;

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const linkSchema = require('./Linky'); // Import the reusable link schema
+const linkySchema = require('./Linky'); // Import the reusable link schema
+const StepSchema = require('./Step'); // Import the reusable step schema
 
 const ingredientReferenceSchema = new mongoose.Schema({
   ingredient: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
@@ -10,9 +11,9 @@ const ingredientReferenceSchema = new mongoose.Schema({
 const recipeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   ingredients: [ingredientReferenceSchema],
-  steps: [{ description: String, order: Number }],
+  steps: [StepSchema], // Embed the StepSchema directly, making steps unique to each recipe
   imageURL: { type: String, required: false }, // Optional image URL
-  links: [linkSchema], // Embedding links using the reusable link schema
+  links: [linkySchema], // Embedding links using the reusable link schema
 });
 
 const Recipe = mongoose.model('Recipe', recipeSchema);
