@@ -10,5 +10,6 @@ const linkySchema = new mongoose.Schema({
   description: { type: String, required: false }, // Optional description for the link
 });
 
-// Export only the schema to reuse in other schemas
-module.exports = linkySchema;
+// Export both the schema and the model
+const Linky = mongoose.model('Linky', linkySchema);
+module.exports = { Linky, linkySchema };

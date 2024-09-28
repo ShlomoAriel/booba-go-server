@@ -7,13 +7,14 @@ const StepSchema = new mongoose.Schema({
   },
   imageURL: {
     type: String,
-    required: false, // Optional
+    required: false,
   },
   order: {
     type: Number,
-    required: true, // Ensures steps are in order
+    required: true,
   },
 });
 
-// Export only the schema to embed it in other models
-module.exports = StepSchema;
+// Export both the schema and the model
+const Step = mongoose.model('Step', StepSchema);
+module.exports = { Step, StepSchema };
