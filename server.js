@@ -2,10 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const admin = require('firebase-admin'); // Firebase Admin SDK
-const eventRoutes = require('./routes/eventRoutes');
-const recipeRoutes = require('./routes/recipeRoutes');
-const unitRoutes = require('./routes/unitRoutes'); // Add unit routes
-const ingredientRoutes = require('./routes/ingredientRoutes'); // Add ingredient routes
 const errorHandler = require('./utils/errorHandler');
 const serviceAccount = require('./keys/firebase-adminsdk.json'); // Firebase key
 const mongooseToSwagger = require('mongoose-to-swagger');
@@ -91,11 +87,20 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Routes
-app.use('/api', eventRoutes); // Event routes
-app.use('/api', recipeRoutes); // Recipe routes
-app.use('/api', unitRoutes); // Unit routes
-app.use('/api', ingredientRoutes); // Ingredient routes
+// Helper function to dynamically load and register routes from the "routes" directory
+const loadRoutes = (routesDirectory) => {
+  fs.readdirSync(routesDirectory).forEach((file) => {
+    if (file.endsWith('.js')) {
+      const route = require(path.join(routesDirectory, file));
+      const routeName = `/${file.replace('Routes.js', '').toLowerCase()}`; // Create route path based on filename
+      app.use(`/api${routeName}`, route);
+    }
+  });
+};
+
+// Dynamically load all routes from the "routes" folder
+const routesDirectory = path.join(__dirname, 'routes');
+loadRoutes(routesDirectory);
 
 // Error handling middleware
 app.use(errorHandler);
