@@ -22,7 +22,7 @@ router.post('/verify', authenticate, async (req, res) => {
 });
 
 // Endpoint to get all users (Admin or authenticated users)
-router.get('/', authenticate, async (req, res) => {
+router.get('/users', authenticate, async (req, res) => {
   try {
     const users = await User.find({});
     res.status(200).json(users); // Send all users
@@ -35,7 +35,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Endpoint to search users by email or name
-router.get('/search', authenticate, async (req, res) => {
+router.get('/users/search', authenticate, async (req, res) => {
   const { query } = req.query;
   if (!query) {
     return res.status(400).json({ message: 'No query provided' });
