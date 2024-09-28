@@ -7,6 +7,7 @@ const recipeRoutes = require('./routes/recipeRoutes');
 const unitRoutes = require('./routes/unitRoutes'); // Add unit routes
 const ingredientRoutes = require('./routes/ingredientRoutes'); // Add ingredient routes
 const potentialRecommendationRoutes = require('./routes/potentialRecommendationRoutes');
+const userRoutes = require('./routes/userRoutes'); // Import the user routes
 const errorHandler = require('./utils/errorHandler');
 const serviceAccount = require('./keys/firebase-adminsdk.json'); // Firebase key
 const mongooseToSwagger = require('mongoose-to-swagger');
@@ -98,6 +99,7 @@ app.use('/api', recipeRoutes); // Recipe routes
 app.use('/api', unitRoutes); // Unit routes
 app.use('/api', ingredientRoutes); // Ingredient routes
 app.use('/api', potentialRecommendationRoutes); // Ensure it's registered
+app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
