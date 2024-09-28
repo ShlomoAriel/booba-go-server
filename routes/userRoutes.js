@@ -1,9 +1,10 @@
 const express = require('express');
 const authenticate = require('../middleware/authMiddleware'); // Import the authentication middleware
 const router = express.Router();
+const User = require('../models/User');
 
 // Endpoint to verify Firebase token and find/create the user
-router.post('/verify', authenticate, async (req, res) => {
+router.post('/users/verify', authenticate, async (req, res) => {
   try {
     // At this point, the Firebase token has been verified and the user is found or created
     console.log('User successfully authenticated and processed:', req.user);

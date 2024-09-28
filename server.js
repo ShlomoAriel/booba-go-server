@@ -99,7 +99,7 @@ app.use('/api', recipeRoutes); // Recipe routes
 app.use('/api', unitRoutes); // Unit routes
 app.use('/api', ingredientRoutes); // Ingredient routes
 app.use('/api', potentialRecommendationRoutes); // Ensure it's registered
-app.use('/api/users', userRoutes);
+app.use('/api', userRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
