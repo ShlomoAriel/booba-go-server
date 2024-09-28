@@ -1,5 +1,5 @@
 const express = require('express');
-const authenticate = require('../middlewares/authMiddleware'); // Import the authentication middleware
+const authenticate = require('../middleware/authMiddleware'); // Import the authentication middleware
 const PotentialRecommendation = require('../models/PotentialRecommendation');
 const Recipe = require('../models/Recipe'); // For promotion logic
 const router = express.Router();
