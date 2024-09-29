@@ -59,7 +59,6 @@ router.post('/potential-recommendations', authenticate, async (req, res) => {
   try {
     const { link, type, description } = req.body;
 
-    // Create a new recommendation associated with the authenticated user
     const recommendation = new PotentialRecommendation({
       user: req.user._id, // Use the authenticated user's ID
       link,
@@ -69,6 +68,110 @@ router.post('/potential-recommendations', authenticate, async (req, res) => {
 
     await recommendation.save();
     res.status(201).json(recommendation);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /potential-recommendations:
+ *   get:
+ *     summary: Get all potential recommendations
+ *     tags:
+ *       - Potential Recommendations
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of potential recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     description: Recommendation ID
+ *                   link:
+ *                     type: string
+ *                     description: The link being recommended
+ *                   type:
+ *                     type: string
+ *                     description: The type of recommendation
+ *                   description:
+ *                     type: string
+ *                     description: A brief description of the recommendation
+ *                   status:
+ *                     type: string
+ *                     description: The status of the recommendation (pending/promoted/rejected)
+ *       400:
+ *         description: Bad request
+ */
+router.get('/potential-recommendations', authenticate, async (req, res) => {
+  try {
+    const recommendations = await PotentialRecommendation.find();
+    res.status(200).json(recommendations);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /potential-recommendations/{id}:
+ *   get:
+ *     summary: Get a potential recommendation by ID
+ *     tags:
+ *       - Potential Recommendations
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the potential recommendation
+ *     responses:
+ *       200:
+ *         description: Potential recommendation details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Recommendation ID
+ *                 link:
+ *                   type: string
+ *                   description: The link being recommended
+ *                 type:
+ *                   type: string
+ *                   description: The type of recommendation
+ *                 description:
+ *                   type: string
+ *                   description: A brief description of the recommendation
+ *                 status:
+ *                   type: string
+ *                   description: The status of the recommendation (pending/promoted/rejected)
+ *       404:
+ *         description: Recommendation not found
+ *       400:
+ *         description: Bad request
+ */
+router.get('/potential-recommendations/:id', authenticate, async (req, res) => {
+  try {
+    const recommendation = await PotentialRecommendation.findById(
+      req.params.id
+    );
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found' });
+    }
+    res.status(200).json(recommendation);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -125,7 +228,6 @@ router.post(
       const newRecipe = recommendation.promoteToRecipe();
       await newRecipe.save();
 
-      // Mark recommendation as promoted
       recommendation.status = 'promoted';
       await recommendation.save();
 
