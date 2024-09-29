@@ -1,55 +1,34 @@
-const express = require('express');
-const authenticate = require('../middleware/authMiddleware'); // Ensure this path is correct
-const PotentialRecommendation = require('../models/PotentialRecommendation');
-const Recipe = require('../models/Recipe'); // For promotion logic
-const router = express.Router();
+const mongoose = require('mongoose');
 
-// Route to create a new recommendation
-router.post('/potential-recommendations', authenticate, async (req, res) => {
-  try {
-    const { link, type, description } = req.body;
-
-    // Create a new recommendation associated with the authenticated user
-    const recommendation = new PotentialRecommendation({
-      user: req.user._id, // Use the authenticated user's ID
-      link,
-      type,
-      description,
-    });
-
-    await recommendation.save();
-    res.status(201).json(recommendation);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+const potentialRecommendationSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // User who made the recommendation
+  link: { type: String, required: true }, // URL of the recommended item
+  type: {
+    type: String,
+    enum: ['recipe', 'article', 'event', 'other'], // Types of recommendations
+    required: true,
+  },
+  description: { type: String, required: false }, // Optional description
+  status: {
+    type: String,
+    enum: ['pending', 'promoted', 'rejected'], // Track the status of the recommendation
+    default: 'pending',
+  },
+  createdAt: { type: Date, default: Date.now }, // Timestamp for recommendation
 });
 
-// Route to promote a recommendation to a Recipe
-router.post(
-  '/potential-recommendations/:id/promote',
-  authenticate,
-  async (req, res) => {
-    try {
-      const recommendation = await PotentialRecommendation.findById(
-        req.params.id
-      );
+// Promote the recommendation to a Recipe
+potentialRecommendationSchema.methods.promoteToRecipe = function () {
+  const Recipe = mongoose.model('Recipe');
+  return new Recipe({
+    name: this.description, // Customize or fetch additional info
+    links: [{ url: this.link, type: 'recipe' }],
+    // Add other required fields for your Recipe model
+  });
+};
 
-      if (!recommendation) {
-        return res.status(404).json({ message: 'Recommendation not found' });
-      }
-
-      const newRecipe = recommendation.promoteToRecipe();
-      await newRecipe.save();
-
-      // Mark recommendation as promoted
-      recommendation.status = 'promoted';
-      await recommendation.save();
-
-      res.status(201).json(newRecipe);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
+const PotentialRecommendation = mongoose.model(
+  'PotentialRecommendation',
+  potentialRecommendationSchema
 );
-
-module.exports = router;
+module.exports = PotentialRecommendation;
