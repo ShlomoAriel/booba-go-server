@@ -268,4 +268,143 @@ router.post('/recommendations/:id/promote', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /recommendations/{id}:
+ *   put:
+ *     summary: Update a recommendation by ID
+ *     tags:
+ *       - Recommendations
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the recommendation to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               link:
+ *                 type: string
+ *                 description: The updated link
+ *               type:
+ *                 type: string
+ *                 description: The updated type of recommendation
+ *               description:
+ *                 type: string
+ *                 description: The updated description of the recommendation
+ *     responses:
+ *       200:
+ *         description: Recommendation updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Recommendation ID
+ *                 link:
+ *                   type: string
+ *                   description: The updated link being recommended
+ *                 type:
+ *                   type: string
+ *                   description: The updated type of recommendation
+ *                 description:
+ *                   type: string
+ *                   description: The updated description of the recommendation
+ *       404:
+ *         description: Recommendation not found
+ *       400:
+ *         description: Bad request
+ */
+router.put('/recommendations/:id', authenticate, async (req, res) => {
+  try {
+    const { link, type, description } = req.body;
+
+    // Find recommendation by ID
+    const recommendation = await Recommendation.findById(req.params.id);
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found' });
+    }
+
+    // Update the recommendation fields
+    recommendation.link = link || recommendation.link;
+    recommendation.type = type || recommendation.type;
+    recommendation.description = description || recommendation.description;
+
+    // Attempt to extract updated metadata if link has changed
+    if (link && link !== recommendation.link) {
+      const metadata = await extractMetadata(link);
+      recommendation.metadata = metadata
+        ? {
+            title: metadata.title,
+            image: metadata.image,
+            url: metadata.url,
+          }
+        : recommendation.metadata; // If metadata extraction fails, retain the old metadata
+    }
+
+    // Save the updated recommendation
+    await recommendation.save();
+    res.status(200).json(recommendation);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /recommendations/{id}:
+ *   delete:
+ *     summary: Delete a recommendation by ID
+ *     tags:
+ *       - Recommendations
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the recommendation to delete
+ *     responses:
+ *       200:
+ *         description: Recommendation deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Recommendation deleted successfully
+ *       404:
+ *         description: Recommendation not found
+ *       400:
+ *         description: Bad request
+ */
+router.delete('/recommendations/:id', authenticate, async (req, res) => {
+  try {
+    const recommendation = await Recommendation.findById(req.params.id);
+
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found' });
+    }
+
+    await recommendation.remove();
+    res.status(200).json({ message: 'Recommendation deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 module.exports = router;
