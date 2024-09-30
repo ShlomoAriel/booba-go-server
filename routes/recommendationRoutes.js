@@ -1,16 +1,16 @@
 const express = require('express');
 const authenticate = require('../middleware/authMiddleware'); // Import the authentication middleware
-const PotentialRecommendation = require('../models/PotentialRecommendation');
+const Recommendation = require('../models/Recommendation');
 const Recipe = require('../models/Recipe'); // For promotion logic
 const router = express.Router();
 
 /**
  * @swagger
- * /potential-recommendations:
+ * /recommendations:
  *   post:
- *     summary: Create a new potential recommendation
+ *     summary: Create a new recommendation
  *     tags:
- *       - Potential Recommendations
+ *       - Recommendations
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -55,11 +55,11 @@ const router = express.Router();
  *       400:
  *         description: Bad request
  */
-router.post('/potential-recommendations', authenticate, async (req, res) => {
+router.post('/recommendations', authenticate, async (req, res) => {
   try {
     const { link, type, description } = req.body;
 
-    const recommendation = new PotentialRecommendation({
+    const recommendation = new Recommendation({
       user: req.user._id, // Use the authenticated user's ID
       link,
       type,
@@ -75,16 +75,16 @@ router.post('/potential-recommendations', authenticate, async (req, res) => {
 
 /**
  * @swagger
- * /potential-recommendations:
+ * /recommendations:
  *   get:
- *     summary: Get all potential recommendations
+ *     summary: Get all recommendations
  *     tags:
- *       - Potential Recommendations
+ *       - Recommendations
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: A list of potential recommendations
+ *         description: A list of recommendations
  *         content:
  *           application/json:
  *             schema:
@@ -110,9 +110,9 @@ router.post('/potential-recommendations', authenticate, async (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.get('/potential-recommendations', authenticate, async (req, res) => {
+router.get('/recommendations', authenticate, async (req, res) => {
   try {
-    const recommendations = await PotentialRecommendation.find();
+    const recommendations = await Recommendation.find();
     res.status(200).json(recommendations);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -121,11 +121,11 @@ router.get('/potential-recommendations', authenticate, async (req, res) => {
 
 /**
  * @swagger
- * /potential-recommendations/{id}:
+ * /recommendations/{id}:
  *   get:
- *     summary: Get a potential recommendation by ID
+ *     summary: Get a recommendation by ID
  *     tags:
- *       - Potential Recommendations
+ *       - Recommendations
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -134,10 +134,10 @@ router.get('/potential-recommendations', authenticate, async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the potential recommendation
+ *         description: ID of the recommendation
  *     responses:
  *       200:
- *         description: Potential recommendation details
+ *         description: recommendation details
  *         content:
  *           application/json:
  *             schema:
@@ -163,11 +163,9 @@ router.get('/potential-recommendations', authenticate, async (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.get('/potential-recommendations/:id', authenticate, async (req, res) => {
+router.get('/recommendations/:id', authenticate, async (req, res) => {
   try {
-    const recommendation = await PotentialRecommendation.findById(
-      req.params.id
-    );
+    const recommendation = await Recommendation.findById(req.params.id);
     if (!recommendation) {
       return res.status(404).json({ message: 'Recommendation not found' });
     }
@@ -179,11 +177,11 @@ router.get('/potential-recommendations/:id', authenticate, async (req, res) => {
 
 /**
  * @swagger
- * /potential-recommendations/{id}/promote:
+ * /recommendations/{id}/promote:
  *   post:
- *     summary: Promote a potential recommendation to a Recipe
+ *     summary: Promote a recommendation to a Recipe
  *     tags:
- *       - Potential Recommendations
+ *       - Recommendations
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -192,7 +190,7 @@ router.get('/potential-recommendations/:id', authenticate, async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the potential recommendation to promote
+ *         description: ID of the recommendation to promote
  *     responses:
  *       201:
  *         description: Recommendation promoted to a recipe successfully
@@ -212,30 +210,24 @@ router.get('/potential-recommendations/:id', authenticate, async (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.post(
-  '/potential-recommendations/:id/promote',
-  authenticate,
-  async (req, res) => {
-    try {
-      const recommendation = await PotentialRecommendation.findById(
-        req.params.id
-      );
+router.post('/recommendations/:id/promote', authenticate, async (req, res) => {
+  try {
+    const recommendation = await Recommendation.findById(req.params.id);
 
-      if (!recommendation) {
-        return res.status(404).json({ message: 'Recommendation not found' });
-      }
-
-      const newRecipe = recommendation.promoteToRecipe();
-      await newRecipe.save();
-
-      recommendation.status = 'promoted';
-      await recommendation.save();
-
-      res.status(201).json(newRecipe);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found' });
     }
+
+    const newRecipe = recommendation.promoteToRecipe();
+    await newRecipe.save();
+
+    recommendation.status = 'promoted';
+    await recommendation.save();
+
+    res.status(201).json(newRecipe);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
-);
+});
 
 module.exports = router;

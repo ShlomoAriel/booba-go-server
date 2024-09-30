@@ -14,6 +14,8 @@ const recipeSchema = new mongoose.Schema({
   steps: [StepSchema], // Embed the StepSchema directly
   imageURL: { type: String, required: false }, // Optional image URL
   links: [linkySchema], // Embedding links using the reusable link schema
+  createdAt: { type: Date, default: Date.now }, // Automatically set creation date
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to the User who created the recipe
 });
 
 const Recipe = mongoose.model('Recipe', recipeSchema);

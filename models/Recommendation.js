@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const potentialRecommendationSchema = new mongoose.Schema({
+const recommendationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // User who made the recommendation
   link: { type: String, required: true }, // URL of the recommended item
   type: {
@@ -18,7 +18,7 @@ const potentialRecommendationSchema = new mongoose.Schema({
 });
 
 // Promote the recommendation to a Recipe
-potentialRecommendationSchema.methods.promoteToRecipe = function () {
+recommendationSchema.methods.promoteToRecipe = function () {
   const Recipe = mongoose.model('Recipe');
   return new Recipe({
     name: this.description, // Customize or fetch additional info
@@ -27,8 +27,5 @@ potentialRecommendationSchema.methods.promoteToRecipe = function () {
   });
 };
 
-const PotentialRecommendation = mongoose.model(
-  'PotentialRecommendation',
-  potentialRecommendationSchema
-);
-module.exports = PotentialRecommendation;
+const Recommendation = mongoose.model('Recommendation', recommendationSchema);
+module.exports = Recommendation;
