@@ -9,6 +9,12 @@ const recommendationSchema = new mongoose.Schema({
     required: true,
   },
   description: { type: String, required: false }, // Optional description
+  metadata: {
+    title: { type: String },
+    description: { type: String },
+    image: { type: String },
+    url: { type: String },
+  },
   status: {
     type: String,
     enum: ['pending', 'promoted', 'rejected'], // Track the status of the recommendation

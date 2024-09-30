@@ -2,7 +2,34 @@ const express = require('express');
 const authenticate = require('../middleware/authMiddleware'); // Import the authentication middleware
 const Recommendation = require('../models/Recommendation');
 const Recipe = require('../models/Recipe'); // For promotion logic
+const axios = require('axios');
+const cheerio = require('cheerio'); // For HTML parsing
 const router = express.Router();
+
+// Helper function to extract metadata from a link
+async function extractMetadata(link) {
+  try {
+    const { data } = await axios.get(link); // Fetch the page HTML
+    const $ = cheerio.load(data); // Load HTML into Cheerio
+
+    // Extract Open Graph or standard meta tags
+    const metadata = {
+      title:
+        $('meta[property="og:title"]').attr('content') || $('title').text(),
+      description:
+        $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="description"]').attr('content'),
+      image: $('meta[property="og:image"]').attr('content'),
+      url: $('meta[property="og:url"]').attr('content') || link,
+    };
+
+    return metadata;
+  } catch (error) {
+    console.error(`Error fetching metadata from ${link}:`, error.message);
+    // Return null if metadata extraction fails
+    return null;
+  }
+}
 
 /**
  * @swagger
@@ -59,11 +86,22 @@ router.post('/recommendations', authenticate, async (req, res) => {
   try {
     const { link, type, description } = req.body;
 
+    // Attempt to extract metadata, but don't fail if it doesn't succeed
+    const metadata = await extractMetadata(link);
+
+    // Create a new recommendation regardless of metadata
     const recommendation = new Recommendation({
       user: req.user._id, // Use the authenticated user's ID
       link,
       type,
-      description,
+      description: description || (metadata ? metadata.description : ''), // Use metadata description if available
+      metadata: metadata
+        ? {
+            title: metadata.title,
+            image: metadata.image,
+            url: metadata.url,
+          }
+        : null, // If metadata is found, store it, otherwise leave null
     });
 
     await recommendation.save();
