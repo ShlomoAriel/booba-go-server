@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const collectionSchema = new mongoose.Schema({
-  name: String,
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  description: String,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   items: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Collectible' }],
   createdAt: { type: Date, default: Date.now },
 });
