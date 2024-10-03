@@ -7,6 +7,7 @@ const recipeRoutes = require('./routes/recipeRoutes');
 const unitRoutes = require('./routes/unitRoutes'); // Add unit routes
 const ingredientRoutes = require('./routes/ingredientRoutes'); // Add ingredient routes
 const recommendationRoutes = require('./routes/recommendationRoutes');
+const collectionRoutes = require('./routes/collections');
 const userRoutes = require('./routes/userRoutes'); // Import the user routes
 const errorHandler = require('./utils/errorHandler');
 const serviceAccount = require('./keys/firebase-adminsdk.json'); // Firebase key
@@ -100,6 +101,7 @@ app.use('/api', unitRoutes); // Unit routes
 app.use('/api', ingredientRoutes); // Ingredient routes
 app.use('/api', recommendationRoutes); // Ensure it's registered
 app.use('/api', userRoutes);
+app.use('/api', collectionRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
