@@ -154,6 +154,72 @@ router.get('/collections', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /collectible/search:
+ *   get:
+ *     summary: Search for collectibles (recommendations and recipes)
+ *     tags:
+ *       - Collectibles
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: search
+ *         in: query
+ *         required: true
+ *         description: The search query
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A list of matching collectibles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+router.get('/collectible/search', authenticate, async (req, res) => {
+  const query = req.query.search; // Get the search query from the request
+  if (!query) {
+    return res
+      .status(400)
+      .json({ message: 'Search query parameter is required' });
+  }
+
+  try {
+    // Search for Recommendations and Recipes using the provided query
+    const recommendations = await Recommendation.find({
+      $or: [
+        { description: new RegExp(query, 'i') }, // Search in description
+        { 'metadata.title': new RegExp(query, 'i') }, // Search in metadata.title
+      ],
+    });
+
+    const recipes = await Recipe.find({
+      $or: [
+        { name: new RegExp(query, 'i') }, // Search in recipe name
+        { 'ingredients.name': new RegExp(query, 'i') }, // Search in ingredients
+      ],
+    });
+
+    // Merge the results into a single array
+    const collectibles = [
+      ...recommendations.map((item) => ({
+        ...item.toObject(),
+        __t: 'Recommendation',
+      })),
+      ...recipes.map((item) => ({ ...item.toObject(), __t: 'Recipe' })),
+    ];
+
+    res.json(collectibles);
+  } catch (error) {
+    console.error('Error searching collectibles:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /collections/{id}:
  *   get:
  *     summary: Get a collection by ID
