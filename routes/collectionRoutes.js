@@ -206,13 +206,24 @@ router.get('/collectible/search', authenticate, async (req, res) => {
       recipes = await Recipe.find();
     }
 
-    // Merge the results into a single array
+    // Merge the results into a single array and format the `createdAt` dates
     const collectibles = [
       ...recommendations.map((item) => ({
         ...item.toObject(),
         __t: 'Recommendation',
+        createdAt: item.createdAt.toISOString().split('.')[0] + 'Z', // Format date
+        updatedAt: item.updatedAt
+          ? item.updatedAt.toISOString().split('.')[0] + 'Z'
+          : undefined, // Optional
       })),
-      ...recipes.map((item) => ({ ...item.toObject(), __t: 'Recipe' })),
+      ...recipes.map((item) => ({
+        ...item.toObject(),
+        __t: 'Recipe',
+        createdAt: item.createdAt.toISOString().split('.')[0] + 'Z', // Format date
+        updatedAt: item.updatedAt
+          ? item.updatedAt.toISOString().split('.')[0] + 'Z'
+          : undefined, // Optional
+      })),
     ];
 
     res.json(collectibles);
