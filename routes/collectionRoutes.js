@@ -83,7 +83,7 @@ router.post('/collections', authenticate, async (req, res) => {
 
     const collection = new Collection({
       name,
-      owner: req.user._id, // Use the authenticated user's ID
+      user: req.user._id, // Use the authenticated user's ID
       items, // Array of Collectible item IDs
     });
 
