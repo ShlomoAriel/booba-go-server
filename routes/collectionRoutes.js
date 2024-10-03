@@ -180,27 +180,31 @@ router.get('/collections', authenticate, async (req, res) => {
  */
 router.get('/collectible/search', authenticate, async (req, res) => {
   const query = req.query.search; // Get the search query from the request
-  if (!query) {
-    return res
-      .status(400)
-      .json({ message: 'Search query parameter is required' });
-  }
 
   try {
-    // Search for Recommendations and Recipes using the provided query
-    const recommendations = await Recommendation.find({
-      $or: [
-        { description: new RegExp(query, 'i') }, // Search in description
-        { 'metadata.title': new RegExp(query, 'i') }, // Search in metadata.title
-      ],
-    });
+    let recommendations = [];
+    let recipes = [];
 
-    const recipes = await Recipe.find({
-      $or: [
-        { name: new RegExp(query, 'i') }, // Search in recipe name
-        { 'ingredients.name': new RegExp(query, 'i') }, // Search in ingredients
-      ],
-    });
+    // If a search query is provided, search by that query
+    if (query) {
+      recommendations = await Recommendation.find({
+        $or: [
+          { description: new RegExp(query, 'i') }, // Search in description
+          { 'metadata.title': new RegExp(query, 'i') }, // Search in metadata.title
+        ],
+      });
+
+      recipes = await Recipe.find({
+        $or: [
+          { name: new RegExp(query, 'i') }, // Search in recipe name
+          { 'ingredients.name': new RegExp(query, 'i') }, // Search in ingredients
+        ],
+      });
+    } else {
+      // If no query is provided, return all recommendations and recipes
+      recommendations = await Recommendation.find();
+      recipes = await Recipe.find();
+    }
 
     // Merge the results into a single array
     const collectibles = [
