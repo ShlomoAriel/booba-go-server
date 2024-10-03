@@ -98,11 +98,18 @@ router.post('/collections', authenticate, async (req, res) => {
  * @swagger
  * /collections:
  *   get:
- *     summary: Get all collections
+ *     summary: Get all collections (with optional search query)
  *     tags:
  *       - Collections
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search collections by name
  *     responses:
  *       200:
  *         description: A list of collections
@@ -129,7 +136,16 @@ router.post('/collections', authenticate, async (req, res) => {
  */
 router.get('/collections', authenticate, async (req, res) => {
   try {
-    const collections = await Collection.find().populate('items');
+    const { search } = req.query;
+
+    let query = {};
+
+    // If a search query is provided, add a filter for the collection name
+    if (search) {
+      query.name = { $regex: search, $options: 'i' }; // Case-insensitive search
+    }
+
+    const collections = await Collection.find(query).populate('items');
     res.status(200).json(collections);
   } catch (error) {
     res.status(400).json({ message: error.message });
