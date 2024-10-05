@@ -465,11 +465,20 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     }
 
     // Find the collection by ID
-    const collection = await Collection.findById(req.params.id);
+    const collection = await Collection.findById(req.params.id)
+      .populate('items') // This populates the items field with the actual item documents
+      .exec();
 
     // If the collection is not found, return 404
     if (!collection) {
       return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    // Check if the item already exists in the collection
+    if (collection.items.includes(itemId)) {
+      return res
+        .status(400)
+        .json({ message: 'Item already exists in the collection' });
     }
 
     // Add the new item to the collection's items array
