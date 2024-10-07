@@ -26,8 +26,13 @@ const recommendationSchema = new mongoose.Schema({
 // Customize JSON output for `createdAt`
 recommendationSchema.set('toJSON', {
   transform: (doc, ret) => {
-    if (ret.createdAt) {
+    if (ret.createdAt && ret.createdAt instanceof Date) {
+      // Adjust the format to remove milliseconds
       ret.createdAt = ret.createdAt.toISOString().split('.')[0] + 'Z';
+    }
+    if (ret.updatedAt && ret.updatedAt instanceof Date) {
+      // Adjust the format to remove milliseconds for updatedAt too
+      ret.updatedAt = ret.updatedAt.toISOString().split('.')[0] + 'Z';
     }
     return ret;
   },
