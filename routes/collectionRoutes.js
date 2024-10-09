@@ -196,7 +196,7 @@ router.get('/collectible/search', authenticate, async (req, res) => {
 
       recipes = await Recipe.find({
         $or: [
-          { name: new RegExp(query, 'i') }, // Search in recipe name
+          { description: new RegExp(query, 'i') }, // Search in recipe name
           { 'ingredients.name': new RegExp(query, 'i') }, // Search in ingredients
         ],
       });
