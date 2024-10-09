@@ -97,7 +97,7 @@ router.get('/recipes/:id', async (req, res) => {
 
     res.json({
       id: recipe._id,
-      name: recipe.name,
+      description: recipe.description,
       imageURL: recipe.imageURL,
       ingredients: recipe.ingredients.map((ingredientRef) => ({
         amount: ingredientRef.amount,
@@ -154,18 +154,17 @@ router.get('/recipes/:id', async (req, res) => {
  *         description: Bad request
  */
 router.post('/recipes', authenticate, async (req, res) => {
-  const { name, ingredients, steps, imageURL, links } = req.body;
+  const { description, ingredients, steps, imageURL, links } = req.body;
   const userId = req.user._id; // Assuming user ID is available from authentication middleware
 
   try {
-    const processedLinks = links.map((link) => ({
+    const processedLinks = (links || []).map((link) => ({
       url: link.url,
       type: getLinkType(link.url),
       description: link.description || '',
     }));
-
     const newRecipe = new Recipe({
-      name,
+      description,
       ingredients,
       steps,
       imageURL,
