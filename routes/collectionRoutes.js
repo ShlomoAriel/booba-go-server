@@ -3,6 +3,7 @@ const authenticate = require('../middleware/authMiddleware'); // Import the auth
 const Collection = require('../models/Collection');
 const Recipe = require('../models/Recipe');
 const Recommendation = require('../models/Recommendation');
+const Ingredient = require('../models/Ingredient');
 const axios = require('axios');
 const cheerio = require('cheerio'); // For HTML parsing
 const router = express.Router();
@@ -187,6 +188,16 @@ router.get('/collectible/search', authenticate, async (req, res) => {
 
     // If a search query is provided, search by that query
     if (query) {
+      // Search for matching ingredients by name
+      const matchingIngredients = await Ingredient.find({
+        name: new RegExp(query, 'i'), // Search in the Ingredient name field
+      }).select('_id'); // Only return the _id of matching ingredients
+
+      const ingredientIds = matchingIngredients.map(
+        (ingredient) => ingredient._id
+      );
+
+      // Search for recommendations by description or metadata title
       recommendations = await Recommendation.find({
         $or: [
           { description: new RegExp(query, 'i') }, // Search in description
@@ -194,16 +205,21 @@ router.get('/collectible/search', authenticate, async (req, res) => {
         ],
       });
 
+      // Search for recipes by description or matching ingredient IDs
       recipes = await Recipe.find({
         $or: [
-          { description: new RegExp(query, 'i') }, // Search in recipe name
-          { 'ingredients.name': new RegExp(query, 'i') }, // Search in ingredients
+          { description: new RegExp(query, 'i') }, // Search in recipe description
+          { 'ingredients.ingredient': { $in: ingredientIds } }, // Match ingredients by ID
         ],
-      });
+      })
+        .populate('ingredients.ingredient')
+        .populate('ingredients.unit'); // Populate the ingredients and units
     } else {
       // If no query is provided, return all recommendations and recipes
       recommendations = await Recommendation.find();
-      recipes = await Recipe.find();
+      recipes = await Recipe.find()
+        .populate('ingredients.ingredient')
+        .populate('ingredients.unit'); // Populate the ingredients and units
     }
 
     // Merge the results into a single array and format the `createdAt` dates
