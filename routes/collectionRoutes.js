@@ -149,7 +149,7 @@ router.get('/collections', authenticate, async (req, res) => {
     // Fetch collections with items populated
     const collections = await Collection.find(query).populate('items');
 
-    // Populate ingredients and units in Recipe items
+    // Populate ingredients and units in Recipe items and format dates to ISO8601
     const populatedCollections = await Promise.all(
       collections.map(async (collection) => {
         // Iterate through items and check if it's a Recipe
@@ -157,7 +157,7 @@ router.get('/collections', authenticate, async (req, res) => {
           collection.items.map(async (item) => {
             if (item.__t === 'Recipe') {
               // If the item is a Recipe, populate its ingredients and units
-              return await Recipe.populate(item, [
+              const populatedRecipe = await Recipe.populate(item, [
                 {
                   path: 'ingredients.ingredient',
                   select: 'name', // Select specific fields for ingredients
@@ -167,13 +167,38 @@ router.get('/collections', authenticate, async (req, res) => {
                   select: 'name', // Select specific fields for units
                 },
               ]);
+
+              // Format dates in ISO8601 for Recipe
+              return {
+                ...populatedRecipe.toObject(),
+                createdAt:
+                  populatedRecipe.createdAt.toISOString().split('.')[0] + 'Z',
+                updatedAt: populatedRecipe.updatedAt
+                  ? populatedRecipe.updatedAt.toISOString().split('.')[0] + 'Z'
+                  : undefined, // Optional field for updatedAt
+              };
             }
-            return item; // If it's not a Recipe, return the item as is
+
+            // For non-recipe items, just format the dates
+            return {
+              ...item.toObject(),
+              createdAt: item.createdAt.toISOString().split('.')[0] + 'Z',
+              updatedAt: item.updatedAt
+                ? item.updatedAt.toISOString().split('.')[0] + 'Z'
+                : undefined,
+            };
           })
         );
 
-        // Return the collection with populated items
-        return { ...collection.toObject(), items: populatedItems };
+        // Return the collection with populated items and formatted dates
+        return {
+          ...collection.toObject(),
+          items: populatedItems,
+          createdAt: collection.createdAt.toISOString().split('.')[0] + 'Z',
+          updatedAt: collection.updatedAt
+            ? collection.updatedAt.toISOString().split('.')[0] + 'Z'
+            : undefined, // Optional field for updatedAt
+        };
       })
     );
 
