@@ -146,8 +146,33 @@ router.get('/collections', authenticate, async (req, res) => {
       query.name = { $regex: search, $options: 'i' }; // Case-insensitive search
     }
 
+    // Fetch collections with items populated
     const collections = await Collection.find(query).populate('items');
-    res.status(200).json(collections);
+
+    // Populate ingredients in Recipe items
+    const populatedCollections = await Promise.all(
+      collections.map(async (collection) => {
+        // Iterate through items and check if it's a Recipe
+        const populatedItems = await Promise.all(
+          collection.items.map(async (item) => {
+            if (item.__t === 'Recipe') {
+              // If the item is a Recipe, populate its ingredients
+              return await Recipe.populate(item, {
+                path: 'ingredients.ingredient',
+                select: 'name', // You can select specific fields if necessary
+              });
+            }
+            return item; // If it's not a Recipe, return the item as is
+          })
+        );
+
+        // Return the collection with populated items
+        return { ...collection.toObject(), items: populatedItems };
+      })
+    );
+
+    // Send the populated collections in the response
+    res.status(200).json(populatedCollections);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
