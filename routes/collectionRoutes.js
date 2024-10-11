@@ -343,4 +343,95 @@ router.get('/collectible/search', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /collections/{collectionId}/items/{itemId}:
+ *   delete:
+ *     summary: Remove an item from a collection
+ *     tags:
+ *       - Collections
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: collectionId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the collection
+ *       - name: itemId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the item to be removed
+ *     responses:
+ *       200:
+ *         description: Item removed from collection successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Collection ID
+ *                 name:
+ *                   type: string
+ *                   description: Collection name
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     description: Collectible item IDs
+ *       404:
+ *         description: Collection or item not found
+ *       400:
+ *         description: Bad request
+ */
+router.delete(
+  '/collections/:collectionId/items/:itemId',
+  authenticate,
+  async (req, res) => {
+    try {
+      const { collectionId, itemId } = req.params;
+
+      // Find the collection by its ID
+      const collection = await Collection.findById(collectionId);
+
+      if (!collection) {
+        return res.status(404).json({ message: 'Collection not found' });
+      }
+
+      // Check if the item exists in the collection
+      const itemIndex = collection.items.findIndex(
+        (item) => item.toString() === itemId
+      );
+
+      if (itemIndex === -1) {
+        return res
+          .status(404)
+          .json({ message: 'Item not found in collection' });
+      }
+
+      // Remove the item from the collection
+      collection.items.splice(itemIndex, 1);
+
+      // Save the updated collection
+      await collection.save();
+
+      // Optionally populate collection items if needed
+      await collection.populate('items').execPopulate();
+
+      res.status(200).json({
+        message: 'Item removed from collection successfully',
+        collection,
+      });
+    } catch (error) {
+      console.error('Error removing item from collection:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+);
+
 module.exports = router;
