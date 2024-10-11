@@ -434,4 +434,96 @@ router.delete(
   }
 );
 
+/**
+ * @swagger
+ * /collections/{id}/items:
+ *   post:
+ *     summary: Add an item to a collection
+ *     tags:
+ *       - Collections
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the collection
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               itemId:
+ *                 type: string
+ *                 description: The ID of the collectible item to add to the collection
+ *     responses:
+ *       200:
+ *         description: Item added to the collection successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Collection ID
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     description: Collectible item IDs
+ *       404:
+ *         description: Collection not found
+ *       400:
+ *         description: Bad request
+ */
+router.post('/collections/:id/items', authenticate, async (req, res) => {
+  try {
+    const { itemId } = req.body;
+
+    // Validate the itemId
+    if (!itemId) {
+      return res.status(400).json({ message: 'Item ID is required' });
+    }
+
+    // Find the collection by ID
+    const collection = await Collection.findById(req.params.id)
+      .populate('items')
+      .exec();
+
+    // If the collection is not found, return 404
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    // Check if the item already exists in the collection
+    if (collection.items.includes(itemId)) {
+      return res
+        .status(400)
+        .json({ message: 'Item already exists in the collection' });
+    }
+
+    // Add the new item to the collection's items array
+    collection.items.push(itemId);
+
+    // Save the updated collection
+    await collection.save();
+
+    // Populate and format the collection items (if necessary)
+    const populatedCollection = await populateAndFormatCollectionItems(
+      collection
+    );
+
+    // Respond with the updated, populated collection
+    res.status(200).json(populatedCollection);
+  } catch (error) {
+    console.error('Error adding item to collection:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;
