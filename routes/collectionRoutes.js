@@ -513,6 +513,12 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     // Save the updated collection
     await collection.save();
 
+    // Populate the newly added item if it's a Recipe or Recommendation
+    const newlyAddedItem = await Collection.populate(collection, {
+      path: 'items',
+      match: { _id: itemId },
+    });
+
     // Populate and format the collection items
     const populatedCollection = await populateAndFormatCollectionItems(
       collection
