@@ -491,9 +491,7 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     }
 
     // Find the collection by ID
-    const collection = await Collection.findById(req.params.id).populate(
-      'items'
-    );
+    const collection = await Collection.findById(req.params.id);
 
     // If the collection is not found, return 404
     if (!collection) {
@@ -513,18 +511,17 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     // Save the updated collection
     await collection.save();
 
-    // Populate the newly added item if it's a Recipe or Recommendation
-    const newlyAddedItem = await Collection.populate(collection, {
-      path: 'items',
-      match: { _id: itemId },
-    });
+    // Reload the entire collection from the database
+    const updatedCollection = await Collection.findById(req.params.id).populate(
+      'items'
+    );
 
     // Populate and format the collection items
     const populatedCollection = await populateAndFormatCollectionItems(
-      collection
+      updatedCollection
     );
 
-    // Respond with the updated, populated collection
+    // Respond with the fully populated collection
     res.status(200).json(populatedCollection);
   } catch (error) {
     console.error('Error adding item to collection:', error);
