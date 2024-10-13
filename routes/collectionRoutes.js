@@ -491,9 +491,9 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     }
 
     // Find the collection by ID
-    const collection = await Collection.findById(req.params.id)
-      .populate('items')
-      .exec();
+    const collection = await Collection.findById(req.params.id).populate(
+      'items'
+    );
 
     // If the collection is not found, return 404
     if (!collection) {
@@ -513,7 +513,7 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
     // Save the updated collection
     await collection.save();
 
-    // Populate and format the collection items (if necessary)
+    // Populate and format the collection items
     const populatedCollection = await populateAndFormatCollectionItems(
       collection
     );
