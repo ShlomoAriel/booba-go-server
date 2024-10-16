@@ -177,9 +177,9 @@ router.get('/collections', authenticate, async (req, res) => {
 
     let query = {};
 
-    // If a search query is provided, add a filter for the collection name
+    // If a search query is provided, add a filter for the collection description
     if (search) {
-      query.name = { $regex: search, $options: 'i' }; // Case-insensitive search
+      query.description = { $regex: search, $options: 'i' }; // Case-insensitive search
     }
 
     // Fetch collections with items populated
