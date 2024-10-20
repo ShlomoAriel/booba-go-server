@@ -130,10 +130,10 @@ async function populateAndFormatCollectionItems(collection) {
  */
 router.post('/collections', authenticate, async (req, res) => {
   try {
-    const { name, items } = req.body;
+    const { description, items } = req.body;
 
     const collection = new Collection({
-      name,
+      description,
       user: req.user._id, // Use the authenticated user's ID
       items, // Array of Collectible item IDs
     });
