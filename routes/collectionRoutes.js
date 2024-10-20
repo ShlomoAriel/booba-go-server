@@ -139,7 +139,13 @@ router.post('/collections', authenticate, async (req, res) => {
     });
 
     await collection.save();
-    res.status(201).json(collection);
+
+    // Use the helper function to populate and format the collection items
+    const populatedCollection = await populateAndFormatCollectionItems(
+      collection
+    );
+
+    res.status(201).json(populatedCollection);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
