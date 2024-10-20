@@ -396,36 +396,28 @@ router.delete(
     try {
       const { collectionId, itemId } = req.params;
 
-      // Find the collection by its ID
-      const collection = await Collection.findById(collectionId);
+      // Find the collection and remove the item atomically
+      const updatedCollection = await Collection.findOneAndUpdate(
+        { _id: collectionId, user: req.user._id }, // Ensure the user is the owner
+        { $pull: { items: itemId } },
+        { new: true } // Return the updated document
+      ).populate('items'); // Optionally populate fields
 
-      if (!collection) {
-        return res.status(404).json({ message: 'Collection not found' });
-      }
-
-      // Check if the item exists in the collection
-      const itemIndex = collection.items.findIndex(
-        (item) => item.toString() === itemId
-      );
-
-      if (itemIndex === -1) {
+      if (!updatedCollection) {
         return res
           .status(404)
-          .json({ message: 'Item not found in collection' });
+          .json({ message: 'Collection not found or item not in collection' });
       }
 
-      // Remove the item from the collection
-      collection.items.splice(itemIndex, 1);
-
-      // Save the updated collection
-      await collection.save();
-
-      // Optionally populate collection items if needed
-      await collection.populate('items').execPopulate();
+      // Use the helper function to populate and format the collection items
+      const populatedCollection = await populateAndFormatCollectionItems(
+        updatedCollection
+      );
 
       res.status(200).json({
+        success: true,
         message: 'Item removed from collection successfully',
-        collection,
+        collection: populatedCollection,
       });
     } catch (error) {
       console.error('Error removing item from collection:', error);
