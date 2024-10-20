@@ -398,7 +398,7 @@ router.delete(
 
       // Find the collection and remove the item atomically
       const updatedCollection = await Collection.findOneAndUpdate(
-        { _id: collectionId, user: req.user._id }, // Ensure the user is the owner
+        { _id: collectionId }, // Ensure the user is the owner
         { $pull: { items: itemId } },
         { new: true } // Return the updated document
       ).populate('items'); // Optionally populate fields
