@@ -9,24 +9,37 @@ const router = express.Router();
 // Helper function to extract metadata from a link
 async function extractMetadata(link) {
   try {
-    const { data } = await axios.get(link); // Fetch the page HTML
-    const $ = cheerio.load(data); // Load HTML into Cheerio
+    const { data } = await axios.get(link, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+        Referer: link,
+      },
+    });
 
-    // Extract Open Graph or standard meta tags
+    const $ = cheerio.load(data);
     const metadata = {
       title:
-        $('meta[property="og:title"]').attr('content') || $('title').text(),
+        $('meta[property="og:title"]').attr('content') ||
+        $('meta[name="twitter:title"]').attr('content') ||
+        $('title').text(),
       description:
         $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="twitter:description"]').attr('content') ||
         $('meta[name="description"]').attr('content'),
-      image: $('meta[property="og:image"]').attr('content'),
+      image:
+        $('meta[property="og:image"]').attr('content') ||
+        $('meta[name="twitter:image"]').attr('content'),
       url: $('meta[property="og:url"]').attr('content') || link,
+      site_name:
+        $('meta[property="og:site_name"]').attr('content') ||
+        new URL(link).hostname,
+      twitter_card: $('meta[name="twitter:card"]').attr('content'),
     };
 
     return metadata;
   } catch (error) {
     console.error(`Error fetching metadata from ${link}:`, error.message);
-    // Return null if metadata extraction fails
     return null;
   }
 }
@@ -404,6 +417,71 @@ router.delete('/recommendations/:id', authenticate, async (req, res) => {
     res.status(200).json({ message: 'Recommendation deleted successfully' });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /metadata:
+ *   post:
+ *     summary: Extract metadata from a link
+ *     tags:
+ *       - Metadata
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               link:
+ *                 type: string
+ *                 description: The link from which to extract metadata
+ *     responses:
+ *       200:
+ *         description: Extracted metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 title:
+ *                   type: string
+ *                   description: The title of the page
+ *                 description:
+ *                   type: string
+ *                   description: The description of the page
+ *                 image:
+ *                   type: string
+ *                   description: The image of the page
+ *                 url:
+ *                   type: string
+ *                   description: The canonical URL of the page
+ *       400:
+ *         description: Bad request
+ */
+router.post('/metadata', authenticate, async (req, res) => {
+  try {
+    const { link } = req.body;
+
+    if (!link) {
+      return res.status(400).json({ message: 'Link is required' });
+    }
+
+    // Extract metadata using the existing helper function
+    const metadata = await extractMetadata(link);
+
+    if (!metadata) {
+      return res.status(400).json({ message: 'Failed to extract metadata' });
+    }
+
+    // Return the extracted metadata
+    res.status(200).json(metadata);
+  } catch (error) {
+    console.error(`Error extracting metadata: ${error.message}`);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
