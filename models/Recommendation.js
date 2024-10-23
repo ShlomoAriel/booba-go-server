@@ -15,6 +15,7 @@ const recommendationSchema = new mongoose.Schema({
     description: { type: String },
     image: { type: String },
     url: { type: String },
+    site: { type: String },
   },
   status: {
     type: String,

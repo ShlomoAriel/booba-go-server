@@ -31,7 +31,7 @@ async function extractMetadata(link) {
         $('meta[property="og:image"]').attr('content') ||
         $('meta[name="twitter:image"]').attr('content'),
       url: $('meta[property="og:url"]').attr('content') || link,
-      site_name:
+      site:
         $('meta[property="og:site_name"]').attr('content') ||
         new URL(link).hostname,
       twitter_card: $('meta[name="twitter:card"]').attr('content'),
