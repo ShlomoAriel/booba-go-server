@@ -527,4 +527,68 @@ router.post('/collections/:id/items', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /collections/{id}:
+ *   delete:
+ *     summary: Delete a collection by ID
+ *     tags:
+ *       - Collections
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the collection to delete
+ *     responses:
+ *       200:
+ *         description: Collection deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Deletion status
+ *                 message:
+ *                   type: string
+ *                   description: Deletion confirmation message
+ *       404:
+ *         description: Collection not found
+ *       400:
+ *         description: Bad request
+ */
+router.delete('/collections/:id', authenticate, async (req, res) => {
+  try {
+    const collectionId = req.params.id;
+
+    // Find the collection by ID
+    const collection = await Collection.findById(collectionId);
+
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+
+    // If you're using user authentication, you can check if the user owns the collection
+    // if (collection.user.toString() !== req.user._id.toString()) {
+    //   return res.status(403).json({ message: 'Unauthorized to delete this collection' });
+    // }
+
+    // Delete the collection
+    await Collection.findByIdAndDelete(collectionId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Collection deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting collection:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;
